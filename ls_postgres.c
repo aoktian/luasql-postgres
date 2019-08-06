@@ -93,12 +93,24 @@ static void pushvalue (lua_State *L, PGresult *res, int tuple, int i) {
     if (PQgetisnull (res, tuple, i-1))
         lua_pushnil (L);
     else {
-        Oid codigo = PQftype (res, i-1);
         char* value = PQgetvalue (res, tuple, i-1);
-        if (codigo >= 20 && codigo <= 23)
-            lua_pushinteger (L, atoi(value));
-        else
-            lua_pushstring (L, value);
+        switch (PQftype (res, i-1)) {
+            case 20:
+            case 21:
+            case 23:
+                lua_pushinteger (L, atoi(value));
+                break;
+            case 16:
+				if (strcmp(value, "t") == 0) {
+					lua_pushboolean(L, 1);
+				} else {
+					lua_pushboolean(L, 0);
+				}
+				break;
+            default:
+                lua_pushstring (L, value);
+                break;
+        }
     }
 }
 
